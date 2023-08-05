@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="victor.min.js"></script>
+    <title>Digits</title>
+    <style>
+        body {
+            background: #111;
+            width: 100vw;
+            margin: 0;
+            color: cyan;
+            font: 50px sans-serif;
+        }
+
+        canvas {
+            background: #222;
+            margin: 3rem auto;
+            display: block;
+        }
+
+        #result {
+            margin: 3rem auto;
+            display: block;
+            width: 100px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body onload="init()">
+
+    <script>
+
+        const DEBUG = false;
+
+        create = el => document.createElement(el);
+        $ = el => document.querySelector(el);
+        $$ = el => document.querySelectorAll(el);
+
+        let stroke;
+        let canvas, c;
+        const W = 400;
+        const MIN_MOVEMENT = 10;
+        let drawing;
+        let last_x, last_y;
+        let bb;
+
+        function init() {
+            canvas = create('canvas');
+            canvas.width = W;
+            canvas.height = W;
+            c = canvas.getContext('2d');
+            c.lineWidth = 3;
+            c.lineCap = "round";
+            c.strokeStyle = '#fff';
+            document.body.appendChild(canvas);
+            canvas.addEventListener('mousedown', on_mouse);
+            document.body.addEventListener('mousemove', on_mouse);
+            document.body.addEventListener('mouseup', on_mouse);
+            result = create('div');
+            result.id = 'result';
+            if (!DEBUG) { result.style.display = 'none' }
+            document.body.appendChild(result);
+            restart();
+        }
+
+
+        function restart() {
+            $('#result').textContent = "";
+            c.fillStyle = "#ccc";
+            c.font = "100px sans-serif";
+            c.strokeStyle = DEBUG ? "#333" : "#ccc";
+            c.clearRect(0, 0, W, W);
+            drawing = false;
+            stroke = [];
+            bb = {
+                x: W,
+                y: W,
+                x2: 0,
+                y2: 0,
+            };
+
+            // test1()
+        }
+
+        function test1() {
+            add_point(10, 10);
+            add_point(100, 17);
+            add_point(300, 10);
+            add_point(130, 150);
+
+            add_point(10, 300);
+            add_point(100, 300);
+            add_point(300, 300);
+
+            c.beginPath();
+            let w = bb.x2 - bb.x;
+            let h = bb.y2 - bb.y;
+            c.moveTo(stroke[0].x, stroke[0].y);
+            for (let i = 1; i < stroke.length; i++) {
+                c.lineTo(stroke[i].x, stroke[i].y);
+                c.strokeRect(stroke[i].x - 1, stroke[i].y - 1, 2, 2)
+            }
+            c.stroke();
+
+            recognize();
+
+        }
+
+        function add_point(x, y) {
+            if (x < bb.x) bb.x = x;
+            if (y < bb.y) bb.y = y;
+            if (x > bb.x2) bb.x2 = x;
+            if (y > bb.y2) bb.y2 = y;
+
+            stroke.push({ x: x, y: y });
+        }
+
+        function on_mouse(ev) {
+            var rect = canvas.getBoundingClientRect();
+            let x = ev.clientX - rect.left;
+            let y = ev.clientY - rect.top;
+
+            switch (ev.type) {
+                case 'mousedown':
+                    restart();
+                    drawing = true;
+                    add_point(x, y);
+                    last_x = x;
+                    last_y = y;
+                    break;
+                case 'mousemove':
+                    if (!drawing) return;
+                    if (Math.abs(x - last_x) > MIN_MOVEMENT || Math.abs(y - last_y) > MIN_MOVEMENT) {
+                        add_point(x, y);
+                        c.beginPath();
+                        c.moveTo(last_x, last_y);
+                        c.lineTo(x, y);
+                        c.stroke();
+                        if (DEBUG) c.strokeRect(x - 1, y - 1, 3, 3)
+                        last_x = x;
+                        last_y = y;
+                    }
+                    break;
+                case 'mouseup':
+                    add_point(x, y);
+                    drawing = false;
+                    recognize();
+                    break;
+            }
+        }
+
+
+        function recognize() {
+            $('#result').textContent = "?";
+
+            normalize();
+            simplify_by_angle(0.8);
+            simplify_by_angle(0.4);
+            simplify_by_distance(0.1);
+            simplify_by_distance(0.2);
+
+            let candidates = [
+                { digit: 0, angles: [RIGHT, DOWN, LEFT, UP], candidate: true },
+                { digit: 0, angles: [RIGHT, DOWN_LEFT, UP], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, RIGHT, UP_LEFT], candidate: true },
+                { digit: 0, angles: [DOWN, RIGHT, UP, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN, UP_RIGHT, UP, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN, UP_RIGHT, UP_LEFT], candidate: true },
+                { digit: 0, angles: [DOWN, RIGHT, UP_LEFT], candidate: true },
+                { digit: 0, angles: [DOWN, RIGHT, UP, UP_LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, DOWN_RIGHT, UP_RIGHT, UP_LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, DOWN_RIGHT, UP, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, DOWN, UP_RIGHT, UP_LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, DOWN, RIGHT, UP_LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, RIGHT, UP_RIGHT, UP_LEFT], candidate: true },
+                { digit: 0, angles: [LEFT, DOWN, RIGHT, UP_LEFT], candidate: true },
+                { digit: 0, angles: [LEFT, DOWN, RIGHT, UP], candidate: true },
+                { digit: 0, angles: [LEFT, DOWN, RIGHT, UP, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, RIGHT, UP_LEFT, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, RIGHT, UP, UP_LEFT], candidate: true },
+
+                { digit: 1, angles: [UP_RIGHT, DOWN], candidate: true },
+                { digit: 1, angles: [UP_RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 1, angles: [UP_RIGHT, DOWN, DOWN_RIGHT], candidate: true },
+
+                { digit: 2, angles: [RIGHT, DOWN_LEFT, RIGHT], candidate: true },
+                { digit: 2, angles: [RIGHT, DOWN, RIGHT], candidate: true },
+                { digit: 2, angles: [RIGHT, DOWN, DOWN_RIGHT], candidate: true },
+                { digit: 2, angles: [RIGHT, DOWN_LEFT, DOWN_RIGHT], candidate: true },
+                { digit: 2, angles: [DOWN_RIGHT, DOWN_LEFT, RIGHT], candidate: true },
+                { digit: 2, angles: [RIGHT, DOWN_RIGHT, DOWN_LEFT, RIGHT], candidate: true },
+
+                { digit: 3, angles: [RIGHT, DOWN_LEFT, RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 3, angles: [RIGHT, DOWN_LEFT, DOWN_RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 3, angles: [RIGHT, DOWN_LEFT, DOWN_RIGHT, LEFT], candidate: true },
+                { digit: 3, angles: [RIGHT, DOWN_LEFT, RIGHT, LEFT], candidate: true },
+                { digit: 3, angles: [DOWN_RIGHT, DOWN_LEFT, RIGHT, LEFT], candidate: true },
+                { digit: 3, angles: [DOWN_RIGHT, DOWN_LEFT, DOWN_RIGHT, LEFT], candidate: true },
+                { digit: 3, angles: [RIGHT, DOWN_LEFT, RIGHT, DOWN, LEFT], candidate: true },
+                { digit: 3, angles: [RIGHT, DOWN, DOWN_LEFT, RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 3, angles: [RIGHT, DOWN, DOWN_LEFT, RIGHT, LEFT], candidate: true },
+                { digit: 3, angles: [RIGHT, LEFT, RIGHT, DOWN, LEFT], candidate: true },
+                { digit: 3, angles: [RIGHT, DOWN_LEFT, RIGHT, DOWN, LEFT], candidate: true },
+                { digit: 3, angles: [RIGHT, DOWN_LEFT, RIGHT, DOWN, DOWN_LEFT], candidate: true },
+                { digit: 3, angles: [RIGHT, DOWN_LEFT, DOWN_RIGHT, DOWN, LEFT], candidate: true },
+                { digit: 3, angles: [RIGHT, DOWN, LEFT, RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 3, angles: [RIGHT, DOWN, LEFT, RIGHT, DOWN, LEFT], candidate: true },
+                { digit: 3, angles: [RIGHT, DOWN, LEFT, RIGHT, LEFT], candidate: true },
+                { digit: 3, angles: [RIGHT, LEFT, RIGHT, LEFT], candidate: true },
+
+                { digit: 4, angles: [DOWN, RIGHT, UP_RIGHT, DOWN], candidate: true },
+                { digit: 4, angles: [DOWN, RIGHT, UP, DOWN], candidate: true },
+                { digit: 4, angles: [DOWN, RIGHT, DOWN], candidate: true },
+                { digit: 4, angles: [DOWN_RIGHT, RIGHT, DOWN], candidate: true },
+                { digit: 4, angles: [DOWN, RIGHT, UP_LEFT, DOWN], candidate: true },
+                { digit: 4, angles: [DOWN_RIGHT, RIGHT, UP_LEFT, DOWN], candidate: true },
+                { digit: 4, angles: [DOWN_LEFT, RIGHT, UP_LEFT, DOWN], candidate: true },
+                { digit: 4, angles: [DOWN_LEFT, RIGHT, UP, DOWN], candidate: true },
+                { digit: 4, angles: [DOWN_RIGHT, RIGHT, UP, DOWN], candidate: true },
+                { digit: 4, angles: [DOWN, RIGHT, UP, DOWN_RIGHT], candidate: true },
+                { digit: 4, angles: [DOWN_RIGHT, RIGHT, UP, DOWN_RIGHT], candidate: true },
+                { digit: 4, angles: [DOWN, RIGHT, UP, DOWN_LEFT], candidate: true },
+
+                { digit: 5, angles: [LEFT, DOWN, RIGHT, DOWN, LEFT], candidate: true },
+                { digit: 5, angles: [LEFT, DOWN, RIGHT, LEFT], candidate: true },
+                { digit: 5, angles: [LEFT, DOWN, DOWN_RIGHT, LEFT], candidate: true },
+                { digit: 5, angles: [LEFT, DOWN, RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 5, angles: [LEFT, DOWN_RIGHT, LEFT], candidate: true },
+                { digit: 5, angles: [LEFT, DOWN_RIGHT, DOWN_LEFT, UP_LEFT], candidate: true },
+                { digit: 5, angles: [LEFT, DOWN_RIGHT, DOWN_LEFT, LEFT], candidate: true },
+                { digit: 5, angles: [LEFT, DOWN_RIGHT, DOWN, UP_LEFT], candidate: true },
+                { digit: 5, angles: [LEFT, DOWN_RIGHT, DOWN, LEFT], candidate: true },
+                { digit: 5, angles: [LEFT, RIGHT, DOWN, LEFT], candidate: true },
+                { digit: 5, angles: [LEFT, DOWN_LEFT, RIGHT, DOWN, LEFT], candidate: true },
+                { digit: 5, angles: [LEFT, DOWN_LEFT, DOWN_RIGHT, LEFT], candidate: true },
+                { digit: 5, angles: [DOWN_LEFT, DOWN_RIGHT, LEFT], candidate: true },
+
+
+                { digit: 6, angles: [DOWN_LEFT, RIGHT, UP, LEFT], candidate: true },
+                { digit: 6, angles: [DOWN_LEFT, RIGHT, LEFT], candidate: true },
+                { digit: 6, angles: [DOWN_LEFT, DOWN, RIGHT, UP, LEFT], candidate: true },
+                { digit: 6, angles: [DOWN_LEFT, RIGHT, UP_RIGHT, LEFT], candidate: true },
+                { digit: 6, angles: [DOWN_LEFT, DOWN_RIGHT, UP, LEFT], candidate: true },
+                { digit: 6, angles: [DOWN_LEFT, DOWN_RIGHT, UP_RIGHT, LEFT], candidate: true },
+                { digit: 6, angles: [DOWN_LEFT, DOWN_RIGHT, UP_RIGHT, UP, LEFT], candidate: true },
+                { digit: 6, angles: [DOWN_LEFT, DOWN_RIGHT, UP_LEFT], candidate: true },
+                { digit: 6, angles: [DOWN_LEFT, DOWN, RIGHT, LEFT], candidate: true },
+                { digit: 6, angles: [DOWN_LEFT, RIGHT, UP_LEFT], candidate: true },
+                { digit: 6, angles: [LEFT, DOWN_RIGHT, RIGHT, UP_LEFT], candidate: true },
+                { digit: 6, angles: [DOWN, UP_RIGHT, LEFT], candidate: true },
+                { digit: 6, angles: [DOWN, RIGHT, UP, LEFT], candidate: true },
+                { digit: 6, angles: [DOWN, RIGHT, UP_LEFT], candidate: true },
+                { digit: 6, angles: [DOWN, RIGHT, LEFT], candidate: true },
+
+                { digit: 7, angles: [RIGHT, DOWN], candidate: true },
+                { digit: 7, angles: [RIGHT, DOWN_LEFT], candidate: true },
+
+                { digit: 8, angles: [RIGHT, DOWN_LEFT, UP_RIGHT, UP_LEFT, RIGHT], candidate: true },
+                { digit: 8, angles: [RIGHT, DOWN_LEFT, RIGHT, UP_LEFT], candidate: true },
+                { digit: 8, angles: [RIGHT, DOWN, RIGHT, UP_LEFT], candidate: true },
+                { digit: 8, angles: [RIGHT, DOWN_LEFT, RIGHT, UP_LEFT, UP_RIGHT], candidate: true },
+                { digit: 8, angles: [RIGHT, DOWN_LEFT, UP_RIGHT, UP_LEFT], candidate: true },
+                { digit: 8, angles: [RIGHT, DOWN_LEFT, DOWN_RIGHT, UP_LEFT], candidate: true },
+
+                { digit: 9, angles: [LEFT, RIGHT, UP, DOWN], candidate: true },
+                { digit: 9, angles: [LEFT, RIGHT, DOWN], candidate: true },
+                { digit: 9, angles: [LEFT, RIGHT, DOWN_RIGHT], candidate: true },
+                { digit: 9, angles: [LEFT, RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 9, angles: [LEFT, DOWN, RIGHT, UP, DOWN], candidate: true },
+                { digit: 9, angles: [LEFT, DOWN, RIGHT, UP_RIGHT, DOWN], candidate: true },
+                { digit: 9, angles: [LEFT, RIGHT, UP, DOWN_LEFT], candidate: true },
+                { digit: 9, angles: [LEFT, RIGHT, UP_LEFT, DOWN], candidate: true },
+                { digit: 9, angles: [LEFT, RIGHT, UP_RIGHT, DOWN], candidate: true },
+                { digit: 9, angles: [LEFT, DOWN_RIGHT, UP_RIGHT, DOWN], candidate: true },
+                { digit: 9, angles: [LEFT, RIGHT, UP_RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 9, angles: [LEFT, DOWN_LEFT, RIGHT, UP, DOWN], candidate: true },
+                { digit: 9, angles: [LEFT, DOWN_LEFT, RIGHT, DOWN], candidate: true },
+                { digit: 9, angles: [LEFT, DOWN, RIGHT, DOWN], candidate: true },
+                { digit: 9, angles: [LEFT, DOWN_RIGHT, UP, DOWN], candidate: true },
+
+                // less priority
+                { digit: 5, angles: [DOWN_LEFT, RIGHT, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, RIGHT, UP_LEFT], candidate: true },
+            ];
+
+            let angles = [];
+            for (let i = 0; i < stroke.length - 1; i++) {
+                let segment = new Victor(stroke[i + 1].x - stroke[i].x, -(stroke[i + 1].y - stroke[i].y));
+                console.log(stroke, segment);
+                let angle = segment.angle() < 0 ? segment.angle() + Math.PI * 2 : segment.angle();
+                angles.push(direction(angle));
+            }
+
+            console.log(angles);
+
+            for (let i = 0; i < angles.length; i++) {
+                for (let j = 0; j < candidates.length; j++) {
+                    if (!candidates[j].candidate) continue;
+                    if (candidates[j].angles.length != angles.length) {
+                        candidates[j].candidate = false;
+                    }
+                    if (candidates[j].angles[i] != angles[i]) {
+                        candidates[j].candidate = false;
+                    }
+                }
+            }
+
+            let recognized = candidates.filter(c => c.candidate);
+            console.log(recognized);
+            // get set of uniq values with digits
+            let result = [...new Set(recognized.map(v => v.digit))];
+            console.log(result);
+            $('#result').textContent = result.join(', ');
+
+            navigator.clipboard.writeText(angles.join(', '));
+
+            if (DEBUG) debug();
+            else {
+                setTimeout(
+                    () => {
+                        c.clearRect(0, 0, W, W);
+                        if (result.length > 0) {
+                            c.font = Math.floor(bb.y2 - bb.y) + "px sans-serif";
+                            c.fillText(result[0], bb.x, bb.y2);
+                        }
+                    },
+                    200
+                )
+            }
+        }
+
+        function debug() {
+            c.globalAlpha = 0.5;
+            // c.strokeStyle = "green";
+            // c.strokeRect(bb.x, bb.y, bb.x2 - bb.x, bb.y2 - bb.y);
+
+            c.strokeStyle = 'cyan';
+            c.beginPath();
+            let w = bb.x2 - bb.x;
+            let h = bb.y2 - bb.y;
+            c.moveTo(bb.x + stroke[0].x * w, bb.y + stroke[0].y * h);
+            for (let i = 1; i < stroke.length; i++) {
+                c.lineTo(bb.x + stroke[i].x * w, bb.y + stroke[i].y * h);
+                c.strokeRect(bb.x + stroke[i].x * w - 1, bb.y + stroke[i].y * h - 1, 2, 2)
+            }
+            c.stroke();
+            c.globalAlpha = 1;
+        }
+
+        function normalize() {
+            let w = bb.x2 - bb.x;
+            let h = bb.y2 - bb.y;
+            // let size = Math.max(w, h);
+
+            for (let i = 0; i < stroke.length; i++) {
+                stroke[i].x = (stroke[i].x - bb.x) / w;
+                stroke[i].y = (stroke[i].y - bb.y) / h;
+            }
+        }
+
+        function simplify_by_distance(threshold) {
+            while (true) {
+                let prev_length = stroke.length;
+                for (let i = 1; i < stroke.length; i++) {
+                    let a = Victor.fromObject(stroke[i - 1]);
+                    let b = Victor.fromObject(stroke[i]);
+
+                    if (a.distance(b) < threshold) {
+                        stroke.splice(i, 1);
+                        break;
+                    }
+                }
+                if (prev_length == stroke.length) {
+                    break;
+                }
+            }
+        }
+
+        function simplify_by_angle(threshold) {
+            while (true) {
+                let prev_length = stroke.length;
+                let sorted = [];
+                if (stroke.length < 3) {
+                    break;
+                }
+                for (let i = 1; i < stroke.length - 1; i++) {
+                    let a = Victor.fromObject(stroke[i - 1]);
+                    let b = Victor.fromObject(stroke[i]);
+                    let c = Victor.fromObject(stroke[i + 1]);
+
+                    let B = c.subtract(b);
+                    let A = b.subtract(a);
+                    B.normalize();
+                    A.normalize();
+                    let dot = A.dot(B);
+                    sorted.push({ dot: dot, index: i });
+                }
+                sorted.sort((a, b) => b.dot - a.dot);
+                if (sorted[0].dot > threshold) {
+                    stroke.splice(sorted[0].index, 1);
+                }
+                if (prev_length == stroke.length || stroke.length < 3) {
+                    break;
+                }
+            }
+        }
+
+
+        const LEFT = 'LEFT';
+        const RIGHT = 'RIGHT';
+        const UP = 'UP';
+        const DOWN = 'DOWN';
+        const UP_LEFT = 'UP_LEFT';
+        const UP_RIGHT = 'UP_RIGHT';
+        const DOWN_RIGHT = 'DOWN_RIGHT';
+        const DOWN_LEFT = 'DOWN_LEFT';
+
+        function direction(a) {
+            let d = a * 180 / Math.PI;
+            // console.log(d);
+            if (d < 15 || d > 340) return RIGHT;
+            if (d < 200 && d > 160) return LEFT;
+            if (d < 110 && d > 70) return UP;
+            if (d < 290 && d > 250) return DOWN;
+
+            if (d > 15 && d < 70) return UP_RIGHT;
+            if (d > 110 && d < 160) return UP_LEFT;
+            if (d > 200 && d < 250) return DOWN_LEFT;
+            if (d > 290 && d < 340) return DOWN_RIGHT;
+        }
+
+    </script>
+
+</body>
+
+</html>
