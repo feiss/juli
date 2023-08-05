@@ -13,9 +13,11 @@
             margin: 0;
             color: cyan;
             font: 50px sans-serif;
+            overflow: hidden;
         }
 
         canvas {
+            touch-action: none;
             background: #222;
             margin: 3rem auto;
             display: block;
@@ -226,7 +228,6 @@
                 { digit: 4, angles: [DOWN_RIGHT, RIGHT, UP_LEFT, DOWN], candidate: true },
                 { digit: 4, angles: [DOWN_LEFT, RIGHT, UP_LEFT, DOWN], candidate: true },
                 { digit: 4, angles: [DOWN_LEFT, RIGHT, UP, DOWN], candidate: true },
-                { digit: 4, angles: [DOWN_LEFT, RIGHT, DOWN_LEFT], candidate: true },
                 { digit: 4, angles: [DOWN_RIGHT, RIGHT, UP, DOWN], candidate: true },
                 { digit: 4, angles: [DOWN, RIGHT, UP, DOWN_RIGHT], candidate: true },
                 { digit: 4, angles: [DOWN_RIGHT, RIGHT, UP, DOWN_RIGHT], candidate: true },
@@ -245,7 +246,7 @@
                 { digit: 5, angles: [LEFT, DOWN_LEFT, RIGHT, DOWN, LEFT], candidate: true },
                 { digit: 5, angles: [LEFT, DOWN_LEFT, DOWN_RIGHT, LEFT], candidate: true },
                 { digit: 5, angles: [DOWN_LEFT, DOWN_RIGHT, LEFT], candidate: true },
-
+                { digit: 5, angles: [DOWN_LEFT, RIGHT, DOWN_LEFT], candidate: true },
 
                 { digit: 6, angles: [DOWN_LEFT, RIGHT, UP, LEFT], candidate: true },
                 { digit: 6, angles: [DOWN_LEFT, RIGHT, LEFT], candidate: true },
@@ -280,6 +281,9 @@
                 { digit: 8, angles: [LEFT, DOWN_RIGHT, DOWN, LEFT, UP_RIGHT], candidate: true },
                 { digit: 8, angles: [LEFT, DOWN_RIGHT, DOWN, LEFT, UP_RIGHT, LEFT], candidate: true },
                 { digit: 8, angles: [LEFT, DOWN_RIGHT, LEFT, UP_RIGHT, UP_LEFT], candidate: true },
+                { digit: 8, angles: [LEFT, DOWN_RIGHT, UP_LEFT, UP_RIGHT, LEFT], candidate: true },
+                { digit: 8, angles: [DOWN_LEFT, DOWN_RIGHT, LEFT, UP_RIGHT, LEFT], candidate: true },
+                { digit: 8, angles: [DOWN_LEFT, DOWN_RIGHT, LEFT, UP_RIGHT, LEFT], candidate: true },
 
                 { digit: 9, angles: [LEFT, RIGHT, UP, DOWN], candidate: true },
                 { digit: 9, angles: [LEFT, RIGHT, DOWN], candidate: true },
@@ -299,6 +303,7 @@
 
                 // less priority
                 { digit: 5, angles: [DOWN_LEFT, RIGHT, LEFT], candidate: true },
+                { digit: 4, angles: [DOWN_LEFT, RIGHT, DOWN_LEFT], candidate: true },
                 { digit: 0, angles: [DOWN_LEFT, RIGHT, UP_LEFT], candidate: true },
             ];
 
@@ -331,7 +336,7 @@
             console.log(result);
             $('#result').textContent = result.join(', ');
 
-            navigator.clipboard.writeText(angles.join(', '));
+            // navigator.clipboard.writeText(angles.join(', ')).then(() => { }, () => { alert('Portapapeles no disponible') });
 
             if (DEBUG) debug();
             else {
