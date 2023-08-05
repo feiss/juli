@@ -57,9 +57,10 @@
             c.lineCap = "round";
             c.strokeStyle = '#fff';
             document.body.appendChild(canvas);
-            canvas.addEventListener('mousedown', on_mouse);
-            document.body.addEventListener('mousemove', on_mouse);
-            document.body.addEventListener('mouseup', on_mouse);
+            canvas.addEventListener('pointerdown', on_pointer);
+            document.body.addEventListener('pointermove', on_pointer);
+            document.body.addEventListener('pointerup', on_pointer);
+            document.body.addEventListener('pointercancel', on_pointer);
             result = create('div');
             result.id = 'result';
             if (!DEBUG) { result.style.display = 'none' }
@@ -119,20 +120,21 @@
             stroke.push({ x: x, y: y });
         }
 
-        function on_mouse(ev) {
+        function on_pointer(ev) {
             var rect = canvas.getBoundingClientRect();
             let x = ev.clientX - rect.left;
             let y = ev.clientY - rect.top;
 
             switch (ev.type) {
-                case 'mousedown':
+                case 'pointerdown':
+
                     restart();
                     drawing = true;
                     add_point(x, y);
                     last_x = x;
                     last_y = y;
                     break;
-                case 'mousemove':
+                case 'pointermove':
                     if (!drawing) return;
                     if (Math.abs(x - last_x) > MIN_MOVEMENT || Math.abs(y - last_y) > MIN_MOVEMENT) {
                         add_point(x, y);
@@ -145,8 +147,12 @@
                         last_y = y;
                     }
                     break;
-                case 'mouseup':
+                case 'pointerup':
                     add_point(x, y);
+                    drawing = false;
+                    recognize();
+                    break;
+                case 'pointercancel':
                     drawing = false;
                     recognize();
                     break;
