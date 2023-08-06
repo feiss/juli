@@ -7,12 +7,14 @@
     <script src="victor.min.js"></script>
     <title>Digits</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
         body {
             background: #111;
             width: 100vw;
             margin: 0;
             color: cyan;
-            font: 50px sans-serif;
+            font: 50px 'Patrick Hand', sans-serif;
             overflow: hidden;
         }
 
@@ -42,6 +44,7 @@
         $ = el => document.querySelector(el);
         $$ = el => document.querySelectorAll(el);
 
+        let is_mouse = false;
         let stroke;
         let canvas, c;
         const W = 400;
@@ -55,7 +58,7 @@
             canvas.width = W;
             canvas.height = W;
             c = canvas.getContext('2d');
-            c.lineWidth = 3;
+            c.lineWidth = 10;
             c.lineCap = "round";
             c.strokeStyle = '#fff';
             document.body.appendChild(canvas);
@@ -74,7 +77,7 @@
         function restart() {
             $('#result').textContent = "";
             c.fillStyle = "#ccc";
-            c.font = "100px sans-serif";
+            c.font = "100px Patrick Hand,sans-serif";
             c.strokeStyle = DEBUG ? "#333" : "#ccc";
             c.clearRect(0, 0, W, W);
             drawing = false;
@@ -123,13 +126,14 @@
         }
 
         function on_pointer(ev) {
+
             var rect = canvas.getBoundingClientRect();
             let x = ev.clientX - rect.left;
             let y = ev.clientY - rect.top;
 
             switch (ev.type) {
                 case 'pointerdown':
-
+                    is_mouse = ev.pointerType == "mouse";
                     restart();
                     drawing = true;
                     add_point(x, y);
@@ -223,19 +227,28 @@
                 { digit: 4, angles: [DOWN, RIGHT, UP_RIGHT, DOWN], candidate: true },
                 { digit: 4, angles: [DOWN, RIGHT, UP, DOWN], candidate: true },
                 { digit: 4, angles: [DOWN, RIGHT, DOWN], candidate: true },
+                { digit: 4, angles: [DOWN, RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 4, angles: [DOWN_RIGHT, DOWN], candidate: true },
+                { digit: 4, angles: [DOWN_RIGHT, UP, DOWN], candidate: true },
                 { digit: 4, angles: [DOWN_RIGHT, RIGHT, DOWN], candidate: true },
+                { digit: 4, angles: [DOWN_RIGHT, UP_RIGHT, DOWN], candidate: true },
                 { digit: 4, angles: [DOWN, RIGHT, UP_LEFT, DOWN], candidate: true },
                 { digit: 4, angles: [DOWN_RIGHT, RIGHT, UP_LEFT, DOWN], candidate: true },
                 { digit: 4, angles: [DOWN_LEFT, RIGHT, UP_LEFT, DOWN], candidate: true },
                 { digit: 4, angles: [DOWN_LEFT, RIGHT, UP, DOWN], candidate: true },
+                { digit: 4, angles: [DOWN_LEFT, RIGHT, DOWN], candidate: true },
+                { digit: 4, angles: [DOWN_LEFT, DOWN_RIGHT, RIGHT, DOWN], candidate: true },
                 { digit: 4, angles: [DOWN_RIGHT, RIGHT, UP, DOWN], candidate: true },
                 { digit: 4, angles: [DOWN, RIGHT, UP, DOWN_RIGHT], candidate: true },
                 { digit: 4, angles: [DOWN_RIGHT, RIGHT, UP, DOWN_RIGHT], candidate: true },
                 { digit: 4, angles: [DOWN, RIGHT, UP, DOWN_LEFT], candidate: true },
+                { digit: 4, angles: [DOWN, RIGHT, UP, DOWN_LEFT, DOWN_RIGHT], candidate: true },
 
                 { digit: 5, angles: [LEFT, DOWN, RIGHT, DOWN, LEFT], candidate: true },
                 { digit: 5, angles: [LEFT, DOWN, RIGHT, LEFT], candidate: true },
+                { digit: 5, angles: [LEFT, DOWN_RIGHT, DOWN_LEFT], candidate: true },
                 { digit: 5, angles: [LEFT, DOWN, DOWN_RIGHT, LEFT], candidate: true },
+                { digit: 5, angles: [LEFT, DOWN, DOWN_RIGHT, DOWN_LEFT], candidate: true },
                 { digit: 5, angles: [LEFT, DOWN, RIGHT, DOWN_LEFT], candidate: true },
                 { digit: 5, angles: [LEFT, DOWN_RIGHT, LEFT], candidate: true },
                 { digit: 5, angles: [LEFT, DOWN_RIGHT, DOWN_LEFT, UP_LEFT], candidate: true },
@@ -246,7 +259,21 @@
                 { digit: 5, angles: [LEFT, DOWN_LEFT, RIGHT, DOWN, LEFT], candidate: true },
                 { digit: 5, angles: [LEFT, DOWN_LEFT, DOWN_RIGHT, LEFT], candidate: true },
                 { digit: 5, angles: [DOWN_LEFT, DOWN_RIGHT, LEFT], candidate: true },
+                { digit: 5, angles: [DOWN_LEFT, DOWN_RIGHT, DOWN_LEFT], candidate: true },
                 { digit: 5, angles: [DOWN_LEFT, RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 5, angles: [DOWN_LEFT, RIGHT, DOWN, LEFT], candidate: true },
+
+                { digit: 5, angles: [RIGHT, DOWN, LEFT, RIGHT], candidate: true },
+                { digit: 5, angles: [RIGHT, DOWN, DOWN_LEFT, RIGHT], candidate: true },
+                { digit: 5, angles: [RIGHT, DOWN, LEFT, DOWN, RIGHT], candidate: true },
+                { digit: 5, angles: [RIGHT, DOWN, LEFT, DOWN_RIGHT], candidate: true },
+                { digit: 5, angles: [RIGHT, DOWN, LEFT, DOWN, RIGHT], candidate: true },
+                { digit: 5, angles: [RIGHT, DOWN, DOWN_LEFT, RIGHT], candidate: true },
+                { digit: 5, angles: [RIGHT, DOWN, LEFT, RIGHT], candidate: true },
+                { digit: 5, angles: [RIGHT, DOWN, LEFT, DOWN, RIGHT], candidate: true },
+                { digit: 5, angles: [RIGHT, DOWN, LEFT, RIGHT], candidate: true },
+
+
 
                 { digit: 6, angles: [DOWN_LEFT, RIGHT, UP, LEFT], candidate: true },
                 { digit: 6, angles: [DOWN_LEFT, RIGHT, LEFT], candidate: true },
@@ -258,6 +285,7 @@
                 { digit: 6, angles: [DOWN_LEFT, DOWN_RIGHT, UP_LEFT], candidate: true },
                 { digit: 6, angles: [DOWN_LEFT, DOWN, RIGHT, LEFT], candidate: true },
                 { digit: 6, angles: [DOWN_LEFT, RIGHT, UP_LEFT], candidate: true },
+                { digit: 6, angles: [DOWN_LEFT, UP_RIGHT, LEFT], candidate: true },
                 { digit: 6, angles: [LEFT, DOWN_RIGHT, RIGHT, UP_LEFT], candidate: true },
                 { digit: 6, angles: [DOWN, UP_RIGHT, LEFT], candidate: true },
                 { digit: 6, angles: [DOWN, RIGHT, UP, LEFT], candidate: true },
@@ -266,12 +294,14 @@
 
                 { digit: 7, angles: [RIGHT, DOWN], candidate: true },
                 { digit: 7, angles: [RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 7, angles: [DOWN_RIGHT, DOWN_LEFT], candidate: true },
 
                 { digit: 8, angles: [RIGHT, DOWN_LEFT, UP_RIGHT, UP_LEFT, RIGHT], candidate: true },
                 { digit: 8, angles: [RIGHT, DOWN_LEFT, RIGHT, UP_LEFT], candidate: true },
                 { digit: 8, angles: [RIGHT, DOWN, RIGHT, UP_LEFT], candidate: true },
                 { digit: 8, angles: [RIGHT, DOWN_LEFT, RIGHT, UP_LEFT, UP_RIGHT], candidate: true },
                 { digit: 8, angles: [RIGHT, DOWN_LEFT, UP_RIGHT, UP_LEFT], candidate: true },
+                { digit: 8, angles: [RIGHT, DOWN_LEFT, RIGHT, UP], candidate: true },
                 { digit: 8, angles: [RIGHT, DOWN_LEFT, DOWN_RIGHT, UP_LEFT], candidate: true },
                 { digit: 8, angles: [LEFT, DOWN_RIGHT, DOWN_LEFT, LEFT, UP_RIGHT, UP_LEFT], candidate: true },
                 { digit: 8, angles: [LEFT, DOWN_RIGHT, UP_LEFT, UP_RIGHT, UP_LEFT], candidate: true },
@@ -280,10 +310,56 @@
                 { digit: 8, angles: [LEFT, DOWN_RIGHT, DOWN, LEFT, UP_LEFT, UP_RIGHT, UP_LEFT], candidate: true },
                 { digit: 8, angles: [LEFT, DOWN_RIGHT, DOWN, LEFT, UP_RIGHT], candidate: true },
                 { digit: 8, angles: [LEFT, DOWN_RIGHT, DOWN, LEFT, UP_RIGHT, LEFT], candidate: true },
+                { digit: 8, angles: [LEFT, DOWN_RIGHT, DOWN_LEFT, LEFT, UP_RIGHT], candidate: true },
                 { digit: 8, angles: [LEFT, DOWN_RIGHT, LEFT, UP_RIGHT, UP_LEFT], candidate: true },
                 { digit: 8, angles: [LEFT, DOWN_RIGHT, UP_LEFT, UP_RIGHT, LEFT], candidate: true },
                 { digit: 8, angles: [DOWN_LEFT, DOWN_RIGHT, LEFT, UP_RIGHT, LEFT], candidate: true },
                 { digit: 8, angles: [DOWN_LEFT, DOWN_RIGHT, LEFT, UP_RIGHT, LEFT], candidate: true },
+                { digit: 8, angles: [DOWN_LEFT, RIGHT, DOWN, LEFT, UP_RIGHT], candidate: true },
+                { digit: 8, angles: [DOWN_LEFT, DOWN_RIGHT, DOWN_LEFT, UP_RIGHT], candidate: true },
+                { digit: 8, angles: [DOWN_LEFT, DOWN_RIGHT, LEFT, UP_RIGHT], candidate: true },
+                { digit: 8, angles: [LEFT, DOWN_RIGHT, DOWN_LEFT, UP_RIGHT, LEFT], candidate: true },
+                { digit: 8, angles: [LEFT, DOWN, DOWN_RIGHT, LEFT, UP_RIGHT], candidate: true },
+                { digit: 8, angles: [LEFT, RIGHT, DOWN_LEFT, UP_RIGHT], candidate: true },
+                { digit: 8, angles: [RIGHT, DOWN, DOWN_LEFT, RIGHT, UP_LEFT], candidate: true },
+                { digit: 8, angles: [RIGHT, DOWN_LEFT, RIGHT, UP_RIGHT, UP_LEFT], candidate: true },
+                { digit: 8, angles: [DOWN_RIGHT, DOWN_LEFT, RIGHT, UP_LEFT, UP_RIGHT], candidate: true },
+                { digit: 8, angles: [RIGHT, DOWN_LEFT, RIGHT, UP, UP_LEFT], candidate: true },
+                { digit: 8, angles: [DOWN_RIGHT, DOWN, RIGHT, UP_LEFT], candidate: true },
+                { digit: 8, angles: [DOWN_RIGHT, DOWN_LEFT, RIGHT, UP], candidate: true },
+                { digit: 8, angles: [LEFT, DOWN_RIGHT, LEFT, UP, RIGHT], candidate: true },
+                { digit: 8, angles: [LEFT, DOWN_RIGHT, DOWN_LEFT, UP, UP_RIGHT], candidate: true },
+                { digit: 8, angles: [LEFT, DOWN_RIGHT, LEFT, UP], candidate: true },
+                { digit: 8, angles: [LEFT, DOWN, DOWN_LEFT, UP_RIGHT], candidate: true },
+                { digit: 8, angles: [LEFT, DOWN_RIGHT, LEFT, UP, UP_RIGHT], candidate: true },
+                { digit: 8, angles: [DOWN_RIGHT, DOWN_LEFT, RIGHT, UP], candidate: true },
+
+                { digit: 8, angles: [UP_RIGHT, UP_LEFT, RIGHT, DOWN], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, LEFT, RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 8, angles: [RIGHT, UP_LEFT, RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, UP_LEFT, RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, UP_LEFT, RIGHT, DOWN, RIGHT], candidate: true },
+                { digit: 8, angles: [RIGHT, UP_LEFT, DOWN_RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, UP_LEFT, UP_RIGHT, RIGHT, DOWN], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, UP_LEFT, RIGHT, DOWN_LEFT, RIGHT], candidate: true },
+                { digit: 8, angles: [RIGHT, UP_LEFT, RIGHT, DOWN_LEFT, DOWN_RIGHT], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, UP_LEFT, UP_RIGHT, RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, UP_LEFT, RIGHT, DOWN_LEFT, DOWN_RIGHT], candidate: true },
+                { digit: 8, angles: [RIGHT, UP_LEFT, UP, RIGHT, DOWN_LEFT, DOWN_RIGHT], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, UP, UP_LEFT, RIGHT, DOWN_LEFT, DOWN_RIGHT], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, UP_LEFT, UP_RIGHT, RIGHT, DOWN_LEFT, DOWN_RIGHT], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, LEFT, RIGHT, DOWN_LEFT, DOWN_RIGHT], candidate: true },
+                { digit: 8, angles: [RIGHT, UP_LEFT, UP, DOWN_RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, UP_LEFT, UP, RIGHT, DOWN, DOWN_LEFT, DOWN_RIGHT], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, UP_LEFT, UP_RIGHT, DOWN_RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, UP_LEFT, DOWN_RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 8, angles: [UP_RIGHT, UP_LEFT, UP_RIGHT, DOWN_LEFT], candidate: true },
+                { digit: 8, angles: [UP_LEFT, UP_RIGHT, UP, LEFT, DOWN_RIGHT], candidate: true },
+                { digit: 8, angles: [UP_LEFT, RIGHT, UP_LEFT, DOWN], candidate: true },
+                { digit: 8, angles: [UP_LEFT, RIGHT, UP_LEFT, DOWN_LEFT, DOWN_RIGHT], candidate: true },
+                { digit: 8, angles: [LEFT, UP, RIGHT, UP_LEFT, DOWN_LEFT, DOWN_RIGHT], candidate: true },
+
 
                 { digit: 9, angles: [LEFT, RIGHT, UP, DOWN], candidate: true },
                 { digit: 9, angles: [LEFT, RIGHT, DOWN], candidate: true },
@@ -300,6 +376,13 @@
                 { digit: 9, angles: [LEFT, DOWN_LEFT, RIGHT, DOWN], candidate: true },
                 { digit: 9, angles: [LEFT, DOWN, RIGHT, DOWN], candidate: true },
                 { digit: 9, angles: [LEFT, DOWN_RIGHT, UP, DOWN], candidate: true },
+                { digit: 9, angles: [LEFT, DOWN, UP_RIGHT, DOWN], candidate: true },
+                { digit: 9, angles: [LEFT, RIGHT, DOWN_LEFT, DOWN_RIGHT], candidate: true },
+                { digit: 9, angles: [], candidate: true },
+                { digit: 9, angles: [], candidate: true },
+                { digit: 9, angles: [], candidate: true },
+
+
 
                 // less priority
                 { digit: 5, angles: [DOWN_LEFT, RIGHT, LEFT], candidate: true },
@@ -307,15 +390,29 @@
                 { digit: 0, angles: [DOWN_LEFT, RIGHT, UP_LEFT], candidate: true },
             ];
 
+            // mirror 8
+            let mirrored = [];
+            for (let i = 0; i < candidates.length; i++) {
+                const digit = candidates[i].digit;
+                if (digit == 8 || digit == 5) {
+                    add = {
+                        digit: digit,
+                        angles: mirror_angles(candidates[i].angles),
+                        candidate: true,
+                    }
+                    mirrored.push(add);
+                }
+            }
+            candidates = candidates.concat(mirrored);
+
             let angles = [];
             for (let i = 0; i < stroke.length - 1; i++) {
                 let segment = new Victor(stroke[i + 1].x - stroke[i].x, -(stroke[i + 1].y - stroke[i].y));
-                console.log(stroke, segment);
+                // console.log(stroke, segment);
                 let angle = segment.angle() < 0 ? segment.angle() + Math.PI * 2 : segment.angle();
                 angles.push(direction(angle));
             }
 
-            console.log(angles);
 
             for (let i = 0; i < angles.length; i++) {
                 for (let j = 0; j < candidates.length; j++) {
@@ -330,13 +427,15 @@
             }
 
             let recognized = candidates.filter(c => c.candidate);
-            console.log(recognized);
+            // console.log(recognized);
             // get set of uniq values with digits
             let result = [...new Set(recognized.map(v => v.digit))];
-            console.log(result);
+            // console.log(result);
             $('#result').textContent = result.join(', ');
 
-            // navigator.clipboard.writeText(angles.join(', ')).then(() => { }, () => { alert('Portapapeles no disponible') });
+            if (is_mouse) {
+                navigator.clipboard.writeText(angles.join(', '));
+            }
 
             if (DEBUG) debug();
             else {
@@ -344,14 +443,38 @@
                     () => {
                         c.clearRect(0, 0, W, W);
                         if (result.length > 0) {
-                            c.font = Math.floor(bb.y2 - bb.y) + "px sans-serif";
+                            c.font = Math.floor((bb.y2 - bb.y) * 1.5) + "px Patrick Hand,sans-serif";
                             c.fillText(result[0], bb.x, bb.y2);
+                        }
+                        else {
+                            console.log(angles.join(", "));
+
                         }
                     },
                     200
                 )
             }
         }
+
+
+        function mirror_angles(angles) {
+            let mirrored = [];
+            const reflection = {
+                LEFT: RIGHT,
+                RIGHT: LEFT,
+                UP: DOWN,
+                DOWN: UP,
+                UP_LEFT: UP_RIGHT,
+                UP_RIGHT: UP_LEFT,
+                DOWN_RIGHT: DOWN_LEFT,
+                DOWN_LEFT: DOWN_RIGHT,
+            };
+            for (let i = 0; i < angles.length; i++) {
+                mirrored.push(reflection[angles[i]]);
+            }
+            return mirrored;
+        }
+
 
         function debug() {
             c.globalAlpha = 0.5;
@@ -428,7 +551,6 @@
                 }
             }
         }
-
 
         const LEFT = 'LEFT';
         const RIGHT = 'RIGHT';
