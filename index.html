@@ -38,7 +38,7 @@
 
     <script>
 
-        const DEBUG = false;
+        const DEBUG = true;
 
         create = el => document.createElement(el);
         $ = el => document.querySelector(el);
@@ -58,7 +58,7 @@
             canvas.width = W;
             canvas.height = W;
             c = canvas.getContext('2d');
-            c.lineWidth = 10;
+            c.lineWidth = DEBUG ? 5 : 10;
             c.lineCap = "round";
             c.strokeStyle = '#fff';
             document.body.appendChild(canvas);
@@ -186,14 +186,30 @@
                 { digit: 0, angles: [DOWN, RIGHT, UP, UP_LEFT], candidate: true },
                 { digit: 0, angles: [DOWN_LEFT, DOWN_RIGHT, UP_RIGHT, UP_LEFT], candidate: true },
                 { digit: 0, angles: [DOWN_LEFT, DOWN_RIGHT, UP, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, DOWN_RIGHT, UP, UP_LEFT], candidate: true },
                 { digit: 0, angles: [DOWN_LEFT, DOWN, UP_RIGHT, UP_LEFT], candidate: true },
                 { digit: 0, angles: [DOWN_LEFT, DOWN, RIGHT, UP_LEFT], candidate: true },
                 { digit: 0, angles: [DOWN_LEFT, RIGHT, UP_RIGHT, UP_LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, UP_RIGHT, UP_LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, UP_RIGHT, UP, LEFT], candidate: true },
                 { digit: 0, angles: [LEFT, DOWN, RIGHT, UP_LEFT], candidate: true },
                 { digit: 0, angles: [LEFT, DOWN, RIGHT, UP], candidate: true },
                 { digit: 0, angles: [LEFT, DOWN, RIGHT, UP, LEFT], candidate: true },
                 { digit: 0, angles: [DOWN_LEFT, RIGHT, UP_LEFT, LEFT], candidate: true },
                 { digit: 0, angles: [DOWN_LEFT, RIGHT, UP, UP_LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, RIGHT, UP, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, RIGHT, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, DOWN, RIGHT, UP, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, RIGHT, UP_RIGHT, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, DOWN_RIGHT, UP_RIGHT, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, DOWN_RIGHT, UP_RIGHT, UP, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, DOWN_RIGHT, UP_LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, DOWN, RIGHT, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN_LEFT, UP_RIGHT, LEFT], candidate: true },
+                { digit: 0, angles: [LEFT, DOWN_RIGHT, RIGHT, UP_LEFT], candidate: true },
+                { digit: 0, angles: [DOWN, UP_RIGHT, LEFT], candidate: true },
+                { digit: 0, angles: [DOWN, RIGHT, LEFT], candidate: true },
+                { digit: 0, angles: [LEFT, DOWN, UP_RIGHT, LEFT], candidate: true },
 
                 { digit: 1, angles: [UP_RIGHT, DOWN], candidate: true },
                 { digit: 1, angles: [UP_RIGHT, DOWN_LEFT], candidate: true },
@@ -274,23 +290,7 @@
                 { digit: 5, angles: [RIGHT, DOWN, LEFT, RIGHT], candidate: true },
 
 
-
-                { digit: 6, angles: [DOWN_LEFT, RIGHT, UP, LEFT], candidate: true },
-                { digit: 6, angles: [DOWN_LEFT, RIGHT, LEFT], candidate: true },
-                { digit: 6, angles: [DOWN_LEFT, DOWN, RIGHT, UP, LEFT], candidate: true },
-                { digit: 6, angles: [DOWN_LEFT, RIGHT, UP_RIGHT, LEFT], candidate: true },
-                { digit: 6, angles: [DOWN_LEFT, DOWN_RIGHT, UP, LEFT], candidate: true },
-                { digit: 6, angles: [DOWN_LEFT, DOWN_RIGHT, UP_RIGHT, LEFT], candidate: true },
-                { digit: 6, angles: [DOWN_LEFT, DOWN_RIGHT, UP_RIGHT, UP, LEFT], candidate: true },
-                { digit: 6, angles: [DOWN_LEFT, DOWN_RIGHT, UP_LEFT], candidate: true },
-                { digit: 6, angles: [DOWN_LEFT, DOWN, RIGHT, LEFT], candidate: true },
-                { digit: 6, angles: [DOWN_LEFT, RIGHT, UP_LEFT], candidate: true },
-                { digit: 6, angles: [DOWN_LEFT, UP_RIGHT, LEFT], candidate: true },
-                { digit: 6, angles: [LEFT, DOWN_RIGHT, RIGHT, UP_LEFT], candidate: true },
-                { digit: 6, angles: [DOWN, UP_RIGHT, LEFT], candidate: true },
-                { digit: 6, angles: [DOWN, RIGHT, UP, LEFT], candidate: true },
-                { digit: 6, angles: [DOWN, RIGHT, UP_LEFT], candidate: true },
-                { digit: 6, angles: [DOWN, RIGHT, LEFT], candidate: true },
+                // 6 is same as 0
 
                 { digit: 7, angles: [RIGHT, DOWN], candidate: true },
                 { digit: 7, angles: [RIGHT, DOWN_LEFT], candidate: true },
@@ -405,6 +405,21 @@
             }
             candidates = candidates.concat(mirrored);
 
+            // copy 0 to 6
+            let zeros = [];
+            for (let i = 0; i < candidates.length; i++) {
+                const digit = candidates[i].digit;
+                if (digit == 0) {
+                    zeros.push({
+                        digit: 6,
+                        angles: [...candidates[i].angles],
+                        candidate: true,
+                    });
+                }
+            }
+            candidates = candidates.concat(zeros);
+
+
             let angles = [];
             for (let i = 0; i < stroke.length - 1; i++) {
                 let segment = new Victor(stroke[i + 1].x - stroke[i].x, -(stroke[i + 1].y - stroke[i].y));
@@ -414,6 +429,7 @@
             }
 
 
+            // find candidates
             for (let i = 0; i < angles.length; i++) {
                 for (let j = 0; j < candidates.length; j++) {
                     if (!candidates[j].candidate) continue;
@@ -430,7 +446,19 @@
             // console.log(recognized);
             // get set of uniq values with digits
             let result = [...new Set(recognized.map(v => v.digit))];
-            // console.log(result);
+            console.log(result);
+
+            // decide between 0 and 6
+            if (result.indexOf(0) !== -1 && result.indexOf(6) !== -1) {
+                const diff = stroke[stroke.length - 1].y - stroke[0].y;
+                console.log('diff', diff);
+                if (diff > 0.2) {
+                    result = [6];
+                } else {
+                    result = [0];
+                }
+            }
+
             $('#result').textContent = result.join(', ');
 
             if (is_mouse) {
