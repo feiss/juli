@@ -394,7 +394,7 @@
             let mirrored = [];
             for (let i = 0; i < candidates.length; i++) {
                 const digit = candidates[i].digit;
-                if (digit == 8 || digit == 5) {
+                if (digit == 8 || digit == 5 || digit == 3) {
                     add = {
                         digit: digit,
                         angles: mirror_angles(candidates[i].angles),
