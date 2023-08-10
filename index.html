@@ -51,7 +51,16 @@
         const MIN_MOVEMENT = 10;
         let drawing;
         let last_x, last_y;
-        let bb;
+        let bb = {
+            x: W,
+            y: W,
+            x2: 0,
+            y2: 0,
+        };
+        let waiting_next_stroke;
+
+        let prev_angles, prev_result, prev_bb;
+
 
         function init() {
             canvas = create('canvas');
@@ -66,10 +75,10 @@
             document.body.addEventListener('pointermove', on_pointer);
             document.body.addEventListener('pointerup', on_pointer);
             document.body.addEventListener('pointercancel', on_pointer);
-            result = create('div');
-            result.id = 'result';
-            if (!DEBUG) { result.style.display = 'none' }
-            document.body.appendChild(result);
+            const result_div = create('div');
+            result_div.id = 'result';
+            if (!DEBUG) { result_div.style.display = 'none' }
+            document.body.appendChild(result_div);
             restart();
         }
 
@@ -79,16 +88,23 @@
             c.fillStyle = "#ccc";
             c.font = "100px Patrick Hand,sans-serif";
             c.strokeStyle = DEBUG ? "#333" : "#ccc";
-            c.clearRect(0, 0, W, W);
+            if (!waiting_next_stroke) {
+                c.clearRect(0, 0, W, W);
+                bb = {
+                    x: W,
+                    y: W,
+                    x2: 0,
+                    y2: 0,
+                };
+            }
+            prev_bb = {
+                x: bb.x,
+                y: bb.y,
+                x2: bb.x2,
+                y2: bb.y2,
+            };
             drawing = false;
             stroke = [];
-            bb = {
-                x: W,
-                y: W,
-                x2: 0,
-                y2: 0,
-            };
-
             // test1()
         }
 
@@ -309,6 +325,10 @@
                 { digit: 7, angles: [RIGHT, DOWN_LEFT], candidate: true },
                 { digit: 7, angles: [DOWN_RIGHT, DOWN_LEFT], candidate: true },
 
+                { digit: '7b', angles: [RIGHT], candidate: true },
+                { digit: '7b', angles: [DOWN_RIGHT], candidate: true },
+                { digit: '7b', angles: [UP_RIGHT], candidate: true },
+
                 { digit: 8, angles: [RIGHT, DOWN_LEFT, UP_RIGHT, UP_LEFT, RIGHT], candidate: true },
                 { digit: 8, angles: [RIGHT, DOWN_LEFT, RIGHT, UP_LEFT], candidate: true },
                 { digit: 8, angles: [RIGHT, DOWN, RIGHT, UP_LEFT], candidate: true },
@@ -456,6 +476,9 @@
             }
 
             let recognized = candidates.filter(c => c.candidate);
+
+
+
             // console.log(recognized);
             // get set of uniq values with digits
             let result = [...new Set(recognized.map(v => v.digit))];
@@ -472,28 +495,61 @@
                 }
             }
 
-            $('#result').textContent = result.join(', ');
+
+            if (waiting_next_stroke) {
+                if (prev_result[0] == 7) {
+                    if (result[0] == '7b') {
+                        const lastpoint = stroke[stroke.length - 1];
+                        const prevpoint = stroke[stroke.length - 2];
+                        if (prev_bb.y == bb.y && prev_bb.y2 == bb.y2) {
+                            bb = prev_bb;
+                            result = [7];
+                        } else {
+                            result = [];
+                        }
+                    } else {
+                        result = [];
+                    }
+                }
+            } else {
+                // 7b cannot be the first stroke
+                if (result[0] == '7b') {
+                    result.splice(0, 1);
+                }
+            }
+
+
+            prev_result = [...result];
+            prev_angles = [...angles];
 
             if (is_mouse) {
                 navigator.clipboard.writeText(angles.join(', '));
             }
 
-            if (DEBUG) debug();
-            else {
-                setTimeout(
-                    () => {
-                        c.clearRect(0, 0, W, W);
-                        if (result.length > 0) {
-                            c.font = Math.floor((bb.y2 - bb.y) * 1.5) + "px Patrick Hand,sans-serif";
-                            c.fillText(result[0], bb.x, bb.y2);
-                        }
-                        else {
-                            console.log(angles.join(", "));
 
-                        }
-                    },
-                    200
-                )
+            if (!waiting_next_stroke && result.length > 0 && result[0] == 7) {
+                waiting_next_stroke = true;
+                setTimeout(cancel_wait, 1000);
+            } else {
+                waiting_next_stroke = false;
+                if (DEBUG) debug();
+                else setTimeout(show_result, 200);
+            }
+        }
+
+        function cancel_wait() {
+            waiting_next_stroke = false;
+            show_result();
+        }
+
+        function show_result() {
+            c.clearRect(0, 0, W, W);
+            if (prev_result.length > 0) {
+                c.font = Math.floor((bb.y2 - bb.y) * 1.5) + "px Patrick Hand,sans-serif";
+                c.fillText(prev_result[0], bb.x, bb.y2);
+            }
+            else {
+                console.log(prev_angles.join(", "));
             }
         }
 
@@ -518,6 +574,8 @@
 
 
         function debug() {
+            $('#result').textContent = prev_result.join(', ');
+
             c.globalAlpha = 0.5;
             // c.strokeStyle = "green";
             // c.strokeRect(bb.x, bb.y, bb.x2 - bb.x, bb.y2 - bb.y);
