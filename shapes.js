@@ -96,7 +96,7 @@ class Grid {
         this.spacing = spacing;
         this.ratio = ratio;
         this.position = new Victor(0, 0);
-        this.el.setAttribute('viewBox', `0 0 W H`);
+        this.el.setAttribute('viewBox', `0 0 ${W} ${H}`);
         this.el.setAttribute('width', W);
         this.el.setAttribute('height', H);
         this.update();
