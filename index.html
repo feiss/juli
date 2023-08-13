@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="victor.min.js"></script>
     <script src="shapes.js"></script>
-    <title>Digits</title>
+    <title>Libreta</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 
@@ -216,9 +216,11 @@
                     }
                     break;
                 case 'pointerup':
-                    shape.add_point(x, y);
-                    drawing = false;
-                    recognize();
+                    if (drawing && shape !== null) {
+                        shape.add_point(x, y);
+                        drawing = false;
+                        recognize();
+                    }
                     break;
                 case 'pointercancel':
                     drawing = false;
@@ -465,11 +467,20 @@
                 { digit: 9, angles: [LEFT, DOWN_RIGHT, UP, DOWN], candidate: true },
                 { digit: 9, angles: [LEFT, DOWN, UP_RIGHT, DOWN], candidate: true },
                 { digit: 9, angles: [LEFT, RIGHT, DOWN_LEFT, DOWN_RIGHT], candidate: true },
-                { digit: 9, angles: [], candidate: true },
-                { digit: 9, angles: [], candidate: true },
-                { digit: 9, angles: [], candidate: true },
 
+                { digit: '(', angles: [LEFT, DOWN, RIGHT], candidate: true },
+                { digit: '(', angles: [LEFT, DOWN, DOWN_RIGHT], candidate: true },
+                { digit: '(', angles: [DOWN_LEFT, DOWN, DOWN_RIGHT], candidate: true },
+                { digit: '(', angles: [DOWN_LEFT, DOWN_RIGHT], candidate: true },
+                { digit: '(', angles: [DOWN_LEFT, RIGHT], candidate: true },
+                { digit: '(', angles: [DOWN_LEFT, DOWN, RIGHT], candidate: true },
 
+                { digit: ')', angles: [RIGHT, DOWN, LEFT], candidate: true },
+                { digit: ')', angles: [RIGHT, DOWN, DOWN_LEFT], candidate: true },
+                { digit: ')', angles: [DOWN_RIGHT, DOWN, DOWN_LEFT], candidate: true },
+                { digit: ')', angles: [DOWN_RIGHT, DOWN_LEFT], candidate: true },
+                { digit: ')', angles: [DOWN_RIGHT, LEFT], candidate: true },
+                { digit: ')', angles: [DOWN_RIGHT, DOWN, LEFT], candidate: true },
 
                 // less priority
                 { digit: 5, angles: [DOWN_LEFT, RIGHT, LEFT], candidate: true },
@@ -576,14 +587,14 @@
             prev_result = [...result];
             prev_angles = [...angles];
 
-            if (is_mouse) {
+            if (navigator['clipboard']) {
                 navigator.clipboard.writeText(angles.join(', '));
             }
 
 
             if (!waiting_next_stroke && result.length > 0 && result[0] == 7) {
                 waiting_next_stroke = true;
-                setTimeout(cancel_wait, 1000);
+                setTimeout(cancel_wait, 700);
             } else {
                 waiting_next_stroke = false;
                 if (DEBUG) debug();
@@ -592,6 +603,9 @@
         }
 
         function cancel_wait() {
+            if (prev_result.length > 1) {
+                prev_result.splice(0, 1);
+            }
             waiting_next_stroke = false;
             show_result();
         }
