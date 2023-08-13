@@ -63,7 +63,7 @@
         $$ = el => document.querySelectorAll(el);
 
         let is_mouse = false;
-        let shape;
+        let prev_shape, shape;
         let stroke;
         let canvas;
         let W = 4000;
@@ -72,7 +72,7 @@
         let zoom = 1.0;
         let grid_size = 100;
         let grid_ratio = 0.8;
-        const MIN_MOVEMENT = 10;
+        const MIN_MOVEMENT = 8;
         let drawing;
         let last_x, last_y;
         let bb = {
@@ -140,6 +140,7 @@
                 x2: bb.x2,
                 y2: bb.y2,
             };
+            prev_shape = shape;
             drawing = false;
         }
 
@@ -215,7 +216,9 @@
             for (let i = 0; i < shape.coords.length; i++) {
                 stroke.push({ x: shape.coords[i].x, y: shape.coords[i].y });
             }
-            bb = structuredClone(shape.bounds);
+            if (!waiting_next_stroke) {
+                bb = structuredClone(shape.bounds);
+            }
 
             normalize();
             simplify_by_angle(0.8);
@@ -576,7 +579,9 @@
 
         function show_result() {
             canvas.removeChild(shape.el);
+            if (prev_shape) canvas.removeChild(prev_shape.el);
             shape = null;
+            prev_shape = null;
 
             if (prev_result.length > 0) {
                 // const size = Math.floor((bb.y2 - bb.y) * 1.5);
