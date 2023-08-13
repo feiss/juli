@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="victor.min.js"></script>
+    <script src="shapes.js"></script>
     <title>Digits</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
@@ -13,28 +14,45 @@
             background: #111;
             width: 100vw;
             margin: 0;
-            color: cyan;
+            color: rgb(26, 122, 122);
             font: 50px 'Patrick Hand', sans-serif;
             overflow: hidden;
         }
 
-        canvas {
+        #canvas {
             touch-action: none;
-            background: #222;
-            margin: 3rem auto;
+            background: #ababab;
             display: block;
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
 
         #result {
-            margin: 3rem auto;
             display: block;
             width: 100px;
             text-align: center;
+            position: absolute;
+            z-index: 100;
+            top: 0;
+        }
+
+        svg {
+            position: absolute;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
     </style>
 </head>
 
 <body onload="init()">
+    <div id="canvas"></div>
 
     <script>
 
@@ -45,15 +63,21 @@
         $$ = el => document.querySelectorAll(el);
 
         let is_mouse = false;
+        let shape;
         let stroke;
-        let canvas, c;
-        const W = 400;
+        let canvas;
+        let W = 4000;
+        let H = 4000;
+        let pan = new Victor(0, 0);
+        let zoom = 1.0;
+        let grid_size = 100;
+        let grid_ratio = 0.8;
         const MIN_MOVEMENT = 10;
         let drawing;
         let last_x, last_y;
         let bb = {
             x: W,
-            y: W,
+            y: H,
             x2: 0,
             y2: 0,
         };
@@ -63,33 +87,46 @@
 
 
         function init() {
-            canvas = create('canvas');
-            canvas.width = W;
-            canvas.height = W;
-            c = canvas.getContext('2d');
-            c.lineWidth = DEBUG ? 5 : 10;
-            c.lineCap = "round";
-            c.strokeStyle = '#fff';
-            document.body.appendChild(canvas);
+            canvas = $('#canvas');
+            W = window.innerWidth;
+            H = window.innerHeight;
+
+            // c.lineWidth = DEBUG ? 5 : 10;
+            // c.lineCap = "round";
+            // c.strokeStyle = '#fff';
+
             canvas.addEventListener('pointerdown', on_pointer);
             document.body.addEventListener('pointermove', on_pointer);
             document.body.addEventListener('pointerup', on_pointer);
             document.body.addEventListener('pointercancel', on_pointer);
+            window.addEventListener('resize', on_resize);
+
             const result_div = create('div');
             result_div.id = 'result';
             if (!DEBUG) { result_div.style.display = 'none' }
             document.body.appendChild(result_div);
             restart();
+            clear();
         }
 
+        function on_resize() {
+            W = window.innerWidth;
+            H = window.innerHeight;
+
+        }
+
+        function clear() {
+            canvas.innerHTML = '';
+            const grid = new Grid(grid_size, grid_ratio);
+            canvas.appendChild(grid.el);
+        }
 
         function restart() {
             $('#result').textContent = "";
-            c.fillStyle = "#ccc";
-            c.font = "100px Patrick Hand,sans-serif";
-            c.strokeStyle = DEBUG ? "#333" : "#ccc";
+            // c.fillStyle = "#ccc";
+            // c.font = "100px Patrick Hand,sans-serif";
+            // c.strokeStyle = DEBUG ? "#333" : "#ccc";
             if (!waiting_next_stroke) {
-                c.clearRect(0, 0, W, W);
                 bb = {
                     x: W,
                     y: W,
@@ -104,42 +141,32 @@
                 y2: bb.y2,
             };
             drawing = false;
-            stroke = [];
-            // test1()
         }
 
-        function test1() {
-            add_point(10, 10);
-            add_point(100, 17);
-            add_point(300, 10);
-            add_point(130, 150);
-
-            add_point(10, 300);
-            add_point(100, 300);
-            add_point(300, 300);
-
-            c.beginPath();
-            let w = bb.x2 - bb.x;
-            let h = bb.y2 - bb.y;
-            c.moveTo(stroke[0].x, stroke[0].y);
-            for (let i = 1; i < stroke.length; i++) {
-                c.lineTo(stroke[i].x, stroke[i].y);
-                c.strokeRect(stroke[i].x - 1, stroke[i].y - 1, 2, 2)
+        function panzoom() {
+            for (let i = 0; i < canvas.children.length; i++) {
+                canvas.children[i].style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
             }
-            c.stroke();
+        }
+
+        function test1(offset) {
+            let a = new Stroke(10, '#333');
+            a.add_point(10 + offset, 10 + offset);
+            a.add_point(100, 17);
+            a.add_point(300, 10);
+            a.add_point(130, 150);
+
+            a.add_point(10, 300);
+            a.add_point(100, 300);
+            a.add_point(300, 300);
+
+            a.translate(new Victor(offset, offset));
+            canvas.appendChild(a.render());
 
             recognize();
 
         }
 
-        function add_point(x, y) {
-            if (x < bb.x) bb.x = x;
-            if (y < bb.y) bb.y = y;
-            if (x > bb.x2) bb.x2 = x;
-            if (y > bb.y2) bb.y2 = y;
-
-            stroke.push({ x: x, y: y });
-        }
 
         function on_pointer(ev) {
 
@@ -152,25 +179,24 @@
                     is_mouse = ev.pointerType == "mouse";
                     restart();
                     drawing = true;
-                    add_point(x, y);
+
+                    shape = new Stroke(grid_size / 12, '#215');
+                    canvas.appendChild(shape.el);
+                    shape.add_point(x, y);
                     last_x = x;
                     last_y = y;
                     break;
                 case 'pointermove':
                     if (!drawing) return;
                     if (Math.abs(x - last_x) > MIN_MOVEMENT || Math.abs(y - last_y) > MIN_MOVEMENT) {
-                        add_point(x, y);
-                        c.beginPath();
-                        c.moveTo(last_x, last_y);
-                        c.lineTo(x, y);
-                        c.stroke();
-                        if (DEBUG) c.strokeRect(x - 1, y - 1, 3, 3)
+                        shape.add_point(x, y);
+                        // if (DEBUG) c.strokeRect(x - 1, y - 1, 3, 3)
                         last_x = x;
                         last_y = y;
                     }
                     break;
                 case 'pointerup':
-                    add_point(x, y);
+                    shape.add_point(x, y);
                     drawing = false;
                     recognize();
                     break;
@@ -184,6 +210,12 @@
 
         function recognize() {
             $('#result').textContent = "?";
+
+            stroke = [];
+            for (let i = 0; i < shape.coords.length; i++) {
+                stroke.push({ x: shape.coords[i].x, y: shape.coords[i].y });
+            }
+            bb = structuredClone(shape.bounds);
 
             normalize();
             simplify_by_angle(0.8);
@@ -543,12 +575,19 @@
         }
 
         function show_result() {
-            c.clearRect(0, 0, W, W);
+            canvas.removeChild(shape.el);
+            shape = null;
+
             if (prev_result.length > 0) {
-                c.font = Math.floor((bb.y2 - bb.y) * 1.5) + "px Patrick Hand,sans-serif";
-                c.fillText(prev_result[0], bb.x, bb.y2);
-            }
-            else {
+                // const size = Math.floor((bb.y2 - bb.y) * 1.5);
+                let x = (bb.x + bb.x2) / 2;
+                let y = (bb.y + bb.y2) / 2;
+                x = Math.floor(x / (grid_size * grid_ratio)) * grid_size * grid_ratio;
+                y = Math.floor(y / grid_size) * grid_size;
+
+                const text = new Text(prev_result[0], grid_size, '#215', x, y);
+                canvas.appendChild(text.el);
+            } else {
                 console.log(prev_angles.join(", "));
             }
         }
