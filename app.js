@@ -5,6 +5,8 @@ class App {
         this.curr_page = 0;
         this.history = [];
         this.history_cursor = null;
+
+        this.canvas = $('#canvas');
     }
 
     render() {
