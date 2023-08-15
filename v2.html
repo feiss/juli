@@ -6,27 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <script src="victor.min.js"></script>
+    <script src="events.js"></script>
+    <script src="stroke.js"></script>
     <script src="app.js"></script>
     <script src="page.js"></script>
+    <script src="recognizer.js"></script>
 
+    <link rel="shortcut icon" href="favicon.png" type="image/x-icon">
     <link rel="stylesheet" href="style.css">
     <title>Libreta</title>
 </head>
 
 <body onload="init()">
-    <nav>
+    <!-- <nav>
         <a href="javascript:clear();">Borrar</a>
-    </nav>
+    </nav> -->
     <div id="canvas"></div>
 
     <script>
-        create = el => document.createElement(el);
-        $ = el => document.querySelector(el);
-        $$ = el => document.querySelectorAll(el);
-
         let app;
+
         function init() {
-            app = new App();
+            app = new App({ width: 2100, page_ratio: 1.41421, grid_ratio: 0.8 });
+            app.add_page();
             app.render();
         }
     </script>

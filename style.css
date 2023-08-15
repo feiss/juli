@@ -3,18 +3,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 
 body {
-    background: #aaa;
+    background: #000;
     margin: 0;
     width: 100vw;
     margin: 0;
     color: rgb(26, 122, 122);
     font: 30px 'Patrick Hand', sans-serif;
-    /* overflow: hidden; */
+    overflow: hidden;
 }
 
 #canvas {
     touch-action: none;
-    background: #ababab;
+    background: #d2dbe0;
     display: block;
     width: 100vw;
     height: 100vh;
@@ -23,6 +23,7 @@ body {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    overflow: auto;
 }
 
 svg {
@@ -50,7 +51,26 @@ a:active {
 }
 
 .page {
-    width: 100vw;
-    height: calc(100vw * 1.41421);
-    background: #ccc;
+    display: block;
+    position: absolute;
+    background: #e5e6e7;
+    box-shadow: 1px 2px 7px #9badb7;
+}
+
+@media print {
+    nav {
+        display: none;
+    }
+
+    #canvas {
+        background: #fff;
+    }
+
+    .page {
+        box-shadow: none;
+        left: 0;
+        top: 0;
+        width: 95vw !important;
+        height: 95vh !important;
+    }
 }
