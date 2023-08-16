@@ -203,9 +203,26 @@ class Recognizer {
     }
 
     #show_result() {
-        console.log('result: ', this.prev_result[0]);
+        if (this.prev_shape) this.prev_shape.el.parentNode.removeChild(this.prev_shape.el);
+        this.shape.el.parentNode.removeChild(this.shape.el);
+
         this.shape = null;
         this.prev_shape = null;
+
+        let x = (this.bb.x + this.bb.x2) / 2;
+        let y = (this.bb.y + this.bb.y2) / 2;
+        x = Math.floor(x / (app.line_height * app.grid_ratio)) * app.line_height * app.grid_ratio;
+        y = Math.floor(y / app.line_height) * app.line_height;
+
+        if (this.prev_result.length > 0) {
+            console.log('result: ', this.prev_result[0]);
+
+            const text = app.page.add_text(x, y, this.prev_result[0], app.line_height, '#215');
+            app.page.set_cell(x, y, this.prev_result[0], text);
+        } else {
+            app.page.clear_cell(x, y);
+            console.log(this.prev_angles.join(", "));
+        }
     }
 
 

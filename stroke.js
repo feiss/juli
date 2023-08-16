@@ -18,17 +18,17 @@ class Stroke {
             data += this.coords[i].x + ',' + this.coords[i].y + ' ';
             if (i == 0) data += ' L ';
         }
-        this.el.setAttribute('d', data);
+        if (this.coords.length > 1) {
+            this.el.setAttribute('d', data);
+        }
     }
 
     add_point(x, y) {
         this.coords.push(new Victor(x, y));
-
         if (x < this.bounds.x) this.bounds.x = x;
         if (y < this.bounds.y) this.bounds.y = y;
         if (x > this.bounds.x2) this.bounds.x2 = x;
         if (y > this.bounds.y2) this.bounds.y2 = y;
-
         this.#update();
     }
 

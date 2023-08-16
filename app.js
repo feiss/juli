@@ -15,6 +15,7 @@ class App {
     constructor(config) {
         this.W = config.width;
         this.H = config.width * config.page_ratio;
+        this.line_height = 100;
         this.grid_ratio = config.grid_ratio;
 
         this.pages = [];
