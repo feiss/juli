@@ -60,7 +60,6 @@ class Page {
         const textbox = new TextBox(x, y, value, size, color);
         this.drawings.push(textbox);
         this.active_shape = textbox;
-        console.log(textbox.el);
         this.el.appendChild(textbox.el);
         return textbox;
     }

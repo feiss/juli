@@ -37,22 +37,27 @@ class Recognizer {
     recognize(shape) {
         this.shape = shape;
         this.stroke = [];
-        let stroke = this.stroke;
         let candidates = this.#init_candidates();
 
 
         for (let i = 0; i < shape.coords.length; i++) {
-            stroke.push({ x: shape.coords[i].x, y: shape.coords[i].y });
+            this.stroke.push({ x: shape.coords[i].x, y: shape.coords[i].y });
         }
+        let stroke = this.stroke;
+
         if (!this.waiting_next_stroke) {
             this.bb = structuredClone(shape.bounds);
         }
 
-        this.#normalize();
-        this.#simplify_by_angle(0.8);
-        this.#simplify_by_angle(0.4);
-        this.#simplify_by_distance(0.1);
-        this.#simplify_by_distance(0.2);
+        if (shape.coords.length == 2 && shape.coords[0].distance(shape.coords[1]) < app.line_height * 0.1) {
+            stroke = [{ x: shape.coords[0].x, y: shape.coords[0].y }];
+        } else {
+            this.#normalize();
+            this.#simplify_by_angle(0.8);
+            this.#simplify_by_angle(0.4);
+            this.#simplify_by_distance(0.1);
+            this.#simplify_by_distance(0.2);
+        }
 
         let angles = [];
         for (let i = 0; i < stroke.length - 1; i++) {
@@ -60,26 +65,35 @@ class Recognizer {
             let angle = segment.angle() < 0 ? segment.angle() + Math.PI * 2 : segment.angle();
             angles.push(direction(angle));
         }
+        let result;
 
-        // find candidates
-        for (let i = 0; i < angles.length; i++) {
-            for (let j = 0; j < candidates.length; j++) {
-                if (!candidates[j].candidate) continue;
-                if (candidates[j].angles.length != angles.length) {
-                    candidates[j].candidate = false;
-                }
-                if (candidates[j].angles[i] != angles[i]) {
-                    candidates[j].candidate = false;
+        if (angles.length == 0) {
+            // dot
+            // let x = this.bb.x % (app.line_height * app.grid_ratio);
+            let y = this.bb.y % app.line_height;
+            if (y > app.line_height * 0.66) result = ['.'];
+            else result = ['·'];
+        } else {
+
+            // find candidates
+            for (let i = 0; i < angles.length; i++) {
+                for (let j = 0; j < candidates.length; j++) {
+                    if (!candidates[j].candidate) continue;
+                    if (candidates[j].angles.length != angles.length) {
+                        candidates[j].candidate = false;
+                    }
+                    if (candidates[j].angles[i] != angles[i]) {
+                        candidates[j].candidate = false;
+                    }
                 }
             }
+
+            let recognized = candidates.filter(c => c.candidate);
+
+            // console.log(recognized);
+            // get set of uniq values with digits
+            result = [...new Set(recognized.map(v => v.digit))];
         }
-
-        let recognized = candidates.filter(c => c.candidate);
-
-        // console.log(recognized);
-        // get set of uniq values with digits
-        let result = [...new Set(recognized.map(v => v.digit))];
-        console.log(result);
 
         // decide between 0 and 6
         if (result.indexOf(0) !== -1 && result.indexOf(6) !== -1) {
@@ -106,6 +120,11 @@ class Recognizer {
                 } else {
                     result = [];
                 }
+            } else if (this.prev_result[0] == '·') {
+                console.log('prev was ·, now is', result[0]);
+                if (result[0] == '.') {
+                    result[0] = ':';
+                }
             }
         } else {
             // 7b cannot be the first stroke
@@ -123,7 +142,7 @@ class Recognizer {
         }
 
 
-        if (!this.waiting_next_stroke && result.length > 0 && result[0] == 7) {
+        if (!this.waiting_next_stroke && result.length > 0 && (result[0] == 7 || result[0] == '·')) {
             this.waiting_next_stroke = true;
             setTimeout(this.#cancel_wait.bind(this), 700);
         } else {
@@ -132,6 +151,38 @@ class Recognizer {
             // else 
             setTimeout(this.#show_result.bind(this), 200);
         }
+    }
+
+    #show_result() {
+        if (this.prev_shape) this.prev_shape.el.parentNode.removeChild(this.prev_shape.el);
+        this.shape.el.parentNode.removeChild(this.shape.el);
+
+        this.shape = null;
+        this.prev_shape = null;
+
+        let x = (this.bb.x + this.bb.x2) / 2;
+        let y = (this.bb.y + this.bb.y2) / 2;
+        x = Math.floor(x / (app.line_height * app.grid_ratio)) * app.line_height * app.grid_ratio;
+        y = Math.floor(y / app.line_height) * app.line_height;
+
+        if (this.prev_result.length > 0) {
+            console.log('result: ', this.prev_result[0]);
+
+            const text = app.page.add_text(x, y, this.prev_result[0], app.line_height, '#215');
+            app.page.set_cell(x, y, this.prev_result[0], text);
+        } else {
+            app.page.clear_cell(x, y);
+            console.log(this.prev_angles.join(", "));
+        }
+    }
+
+    #cancel_wait() {
+        console.log('cancel wait', this.prev_result);
+        if (this.prev_result.length > 1) {
+            this.prev_result.splice(0, 1);
+        }
+        this.waiting_next_stroke = false;
+        this.#show_result();
     }
 
 
@@ -192,39 +243,6 @@ class Recognizer {
             }
         }
     }
-
-
-    #cancel_wait() {
-        if (this.prev_result.length > 1) {
-            this.prev_result.splice(0, 1);
-        }
-        this.waiting_next_stroke = false;
-        this.#show_result();
-    }
-
-    #show_result() {
-        if (this.prev_shape) this.prev_shape.el.parentNode.removeChild(this.prev_shape.el);
-        this.shape.el.parentNode.removeChild(this.shape.el);
-
-        this.shape = null;
-        this.prev_shape = null;
-
-        let x = (this.bb.x + this.bb.x2) / 2;
-        let y = (this.bb.y + this.bb.y2) / 2;
-        x = Math.floor(x / (app.line_height * app.grid_ratio)) * app.line_height * app.grid_ratio;
-        y = Math.floor(y / app.line_height) * app.line_height;
-
-        if (this.prev_result.length > 0) {
-            console.log('result: ', this.prev_result[0]);
-
-            const text = app.page.add_text(x, y, this.prev_result[0], app.line_height, '#215');
-            app.page.set_cell(x, y, this.prev_result[0], text);
-        } else {
-            app.page.clear_cell(x, y);
-            console.log(this.prev_angles.join(", "));
-        }
-    }
-
 
     #init_candidates() {
         let candidates = [
