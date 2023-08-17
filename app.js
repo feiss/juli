@@ -86,6 +86,10 @@ class App {
         this.pan = this.pan.add(dir);
         this.render();
     }
+
+    time() {
+        return performance.now();
+    }
 }
 
 
